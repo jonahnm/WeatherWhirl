@@ -1,9 +1,15 @@
 #include "WeatherHandler.h"
 #include "FLAnimatedImage/FLAnimatedImage.h"
 #include "FLAnimatedImage/FLAnimatedImageView.h"
+#include "Preferences.h"
 #include "libroot/libroot.h"
 #include <CoreFoundation/CFCGTypes.h>
 #import <CoreFoundation/CoreFoundation.h>
+#include <UIKit/NSStringDrawing.h>
+#include <objc/objc.h>
+#include <Foundation/NSData.h>
+#include <_xlocale.h>
+#include <Foundation/NSAutoreleasePool.h>
 #include <Foundation/NSDate.h>
 #include <UIKit/UIGraphics.h>
 #include <CoreGraphics/CGGeometry.h>
@@ -16,6 +22,7 @@
 #include <Foundation/NSValue.h>
 #include <Foundation/NSFileManager.h>
 #include <time.h>
+#include <MobileGestalt/MobileGestalt.h>
 #include <Foundation/NSObjCRuntime.h>
 #include <Foundation/NSDictionary.h>
 #include <Foundation/NSJSONSerialization.h>
@@ -26,32 +33,36 @@
 @import FLAnimatedImage;
 @implementation UIImage (Resize)
 -(UIImage *)resizedImageWithBounds:(CGSize)bounds {
-CGFloat horizRatio = bounds.width/self.size.width;
-CGFloat vertRatio = bounds.height/self.size.height;
-CGFloat ratio = MIN(horizRatio,vertRatio);
-CGFloat screenScale = UIScreen.mainScreen.scale;
-CGSize newSize = CGSizeMake((self.size.width * ratio) * screenScale, (bounds.height) * screenScale);
-UIGraphicsBeginImageContextWithOptions(newSize, YES, 0);
-[self drawInRect:CGRectMake(0, 0,newSize.width, newSize.height)];
-UIImage *newImage = UIGraphicsGetImageFromCurrentImageContext();
-UIGraphicsEndImageContext();
-return newImage;
+return self;
 }
+@end
+@implementation Storage
+    static CLLocation *_location;
+    +(CLLocation *)location {
+    return _location;
+    }
+    +(void)setLocation:(CLLocation *)location {
+    _location = location;
+    }
 @end
 static UIImage *cachedImage = nil;
 static struct tm *cachedTime = NULL;
+
 NSArray *fetchForecast(struct tm *gmcurtime,NSURL *path) {
-    CLLocationManager *locationManager = [[CLLocationManager alloc] init];
-    [CLLocationManager setAuthorizationStatus:YES forBundleIdentifier:[[NSBundle mainBundle] bundleIdentifier]];
-    [locationManager startUpdatingLocation];
-    [locationManager setDesiredAccuracy:kCLLocationAccuracyBest];
-    NSString *urlstr = [NSString stringWithFormat:@"http://api.openweathermap.org/data/3.0/onecall?lat=%f&lon=%f&appid=4cfd64f823763c23be0eb25c78eb5183",locationManager.location.coordinate.latitude,locationManager.location.coordinate.longitude];
+    CLLocation *location = Storage.location;
+    CFStringRef deviceid = MGGetStringAnswer(kMGUniqueDeviceID);
+    NSString *deviceid_ = (__bridge NSString *)deviceid;
+    NSString *urlstr = [NSString stringWithFormat:@"http://sorasstuff.me/weather?lat=%f&lon=%f&uuid=%@",location.coordinate.latitude,location.coordinate.longitude,deviceid_];
     NSURL *url = [NSURL URLWithString:urlstr];
-    [locationManager stopUpdatingLocation];
     __block NSArray *out = nil;
     __block bool shouldret = false;
     NSURLSessionDataTask *downloadTask = [[NSURLSession sharedSession] dataTaskWithURL:url completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
         if(error) {
+            shouldret = true;
+            return;
+        }
+        NSString *str = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+        if ([str isEqualToString:@"Malformed Request"] || [str isEqualToString:@"Not authed"] || [str isEqualToString:@"Cannot make more than 2 requests a day!"]) {
             shouldret = true;
             return;
         }
@@ -71,17 +82,20 @@ NSArray *fetchForecast(struct tm *gmcurtime,NSURL *path) {
     if(out == nil) {
         return nil;
     }
+    @autoreleasepool {
     NSDictionary *toWrite = @{
         @"forDay": @(gmcurtime->tm_yday),
         @"hourly": out,
     };
     NSError *err;
-    [toWrite writeToURL:path error:&err];
+    NSData *toactuallywrite = [NSJSONSerialization dataWithJSONObject:toWrite options:NSJSONWritingPrettyPrinted error:&err];
     if(err) {
         NSLog(@"Failed to write forecast plist: %@",err);
         return nil;
     }
+    [toactuallywrite writeToURL:path atomically:YES];
     free(gmcurtime);
+    }
     return out;
 }
 NSArray *getForecast(void) {
@@ -89,7 +103,7 @@ NSArray *getForecast(void) {
     #if TARGET_IPHONE_SIMULATOR
     NSString *path = @"/Library/Application Support/WeatherWhirl/Forecast.plist";
     #else
-    NSString *path = ROOT_PATH_NS(@"/Library/Application Support/WeatherWhirl/Forecast.plist");
+    NSString *path = ROOT_PATH_NS(@"/Library/Application Support/WeatherWhirl/Forecast.json");
     #endif
     NSURL *url = [NSURL fileURLWithPath:path];
     struct tm *gmcurtime = NULL; 
@@ -99,7 +113,7 @@ NSArray *getForecast(void) {
         return fetchForecast(gmcurtime, url);
     } else {
         NSError *err;
-        NSDictionary *contents = [NSDictionary dictionaryWithContentsOfURL:url error:&err];
+        NSDictionary *contents = [NSJSONSerialization JSONObjectWithData:[NSData dataWithContentsOfFile:path] options:0 error:&err];
         if(err) {
             NSLog(@"Something went wrong reading forecast plist: %@",err);
             return nil;
@@ -118,7 +132,7 @@ NSArray *getForecast(void) {
         }
     }
 }
-int getIDOfCurrentWeather() {
+int getIDOfCurrentWeather(NSString **outName) {
     NSArray *forecast = getForecast();
     if(forecast == nil) {
         NSLog(@"I appear to have encountered an error getting the forecast for today... Returning!");
@@ -135,6 +149,7 @@ int getIDOfCurrentWeather() {
             continue;
         }
         NSLog(@"Showing for hour: %i",dgmt->tm_hour);
+        *outName = hour[@"weather"][0][@"description"];
         return [((NSNumber *)(hour[@"weather"][0][@"id"])) intValue];
     }
     return 0;
@@ -142,7 +157,38 @@ int getIDOfCurrentWeather() {
 UIImage *UIImageForCurrentWeather(FLAnimatedImage **animatedImageOut,int *idOut) {
     time_t curtime = time(NULL);
     if(cachedImage == nil || (cachedTime != NULL && cachedTime->tm_hour != localtime(&curtime)->tm_hour)) {
-    int id = getIDOfCurrentWeather();
+    int id = 0;
+    NSString *weatherName = nil;
+    if(!WWPreferences.overrideNext) {
+    id = getIDOfCurrentWeather(&weatherName);
+    } else {
+        NSString *override = WWPreferences.override;
+        if([override isEqualToString:@"light rain"]) {
+            id = 500;
+        }
+        if([override isEqualToString:@"clear sky"]) {
+            id = 800;
+        }
+        if([override isEqualToString:@"few clouds"]) {
+            id = 801;
+        }
+        if([override isEqualToString:@"scattered clouds"]) {
+            id = 802;
+        }
+        if([override isEqualToString:@"broken clouds"]) {
+            id = 803;
+        }
+        if([override isEqualToString:@"overcast clouds"]) {
+            id = 804;
+        }
+        if ([override isEqualToString:@"moderate rain"]) {
+            id = 501;
+        }
+        if ([override isEqualToString:@"heavy intensity rain"]) {
+            id = 502;
+        }
+        [WWPreferences setOverrideNext:NO];
+    }
     *idOut = id;
     NSString *filePath = @"";
     NSString *animpath = @"";
@@ -174,6 +220,13 @@ UIImage *UIImageForCurrentWeather(FLAnimatedImage **animatedImageOut,int *idOut)
         filePath = ROOT_PATH_NS(@"/Library/Application Support/WeatherWhirl/grey.jpg");
         break;
     }
+    NSLog(@"%@",weatherName);
+    UIImage *background = nil;
+    if(weatherName != nil) {
+        background = [WWPreferences customBackground:weatherName];
+    } else {
+        background = [WWPreferences customBackground:[WWPreferences override]];
+    }
     NSLog(@"%@",filePath);
     if([filePath isEqualToString:@""]) {
         return nil;
@@ -196,8 +249,10 @@ UIImage *UIImageForCurrentWeather(FLAnimatedImage **animatedImageOut,int *idOut)
         }
     }
     */
-    UIImage *img = [UIImage imageWithContentsOfFile:filePath];
-    cachedImage = img;
+    if(background == nil) {
+        background = [UIImage imageWithContentsOfFile:filePath];
+    }
+    cachedImage = background;
     AntiARCRetain(cachedImage);
     cachedTime = localtime(&curtime);
     if(shoulddoAnim && animatedImageOut != NULL) {

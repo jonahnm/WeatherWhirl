@@ -1,10 +1,11 @@
 import Foundation
 import Comet
-
+import libroot
 // MARK: - Internal
 
 final class PreferenceStorage: ObservableObject {
-    private static let registry: String = "/var/mobile/Library/Preferences/com.sora.weatherwhirlprefs.plist"
+
+    private static let registry: String = NSString.path(withComponents: [NSString.init(cString: libroot_dyn_get_root_prefix(), encoding: UInt(4))! as String,"/var/mobile/Library/Preferences/com.sora.weatherwhirl.plist"])
     /// Welcome to Comet
     /// By @ginsudev
     ///
@@ -21,4 +22,5 @@ final class PreferenceStorage: ObservableObject {
     @Published(key: "isEnabledTweak", registry: registry) var isEnabled = false
     @Published(key: "overrideNext", registry: registry) var shouldOverride = false
     @Published(key: "override",registry: registry) var override = ""
+    @Published(key: "customBackgrounds",registry: registry) var customBackgrounds: Dictionary<String,String> = [:];
 }

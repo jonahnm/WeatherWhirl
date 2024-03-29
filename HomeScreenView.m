@@ -16,8 +16,16 @@
 #include "rootless.h"
 #include <UIKit/NSLayoutConstraint.h>
 @implementation UIScreen (random)
--(CGPoint)randomPoint {
-    return CGPointMake(arc4random_uniform(self.bounds.size.width), arc4random_uniform(self.bounds.size.height));
+-(CGPoint)randomPointWithCloudView:(CloudView *)cloudview {
+    @autoreleasepool {
+    CGPoint point = CGPointMake(arc4random_uniform(self.bounds.size.width), arc4random_uniform(self.bounds.size.height));
+    for (UIView *view in cloudview.subviews) {
+        if (CGRectContainsPoint(view.frame, point)) {
+            return [self randomPointWithCloudView:cloudview];
+        }
+    }
+    return point;
+    }
 }
 @end
 @implementation  HomeScreenView : UIView
@@ -34,6 +42,7 @@
         [_imgView removeFromSuperview];
         }
         _imgView = imgView;
+        imgView.backgroundColor = UIColor.clearColor;
         [self addSubview:imgView];
         [self sendSubviewToBack:imgView];
     }
@@ -58,7 +67,7 @@
     -(void)placeClouds:(int)weatherID {
         CloudView *cloudViewlocal = self.cloudView;
         UIImage *cloud = [UIImage imageWithContentsOfFile:ROOT_PATH_NS(@"/Library/Application Support/WeatherWhirl/cloud.png")];
-        UIImage *sephiroth = [UIImage imageWithContentsOfFile:ROOT_PATH_NS(@"/Library/Application Support/WeatherWhirl/sephiroth.jpg")];
+        UIImage *sephiroth = [UIImage imageWithContentsOfFile:ROOT_PATH_NS(@"/Library/Application Support/WeatherWhirl/sephiroth.png")];
         switch(weatherID) {
             case 801:
                 [cloudViewlocal placeClouds:FewClouds :cloud : None];
@@ -73,7 +82,13 @@
                 [cloudViewlocal placeClouds:OverClouds :cloud : None];
                 break;
             case 500:
-                [cloudViewlocal placeClouds:BrokeClouds :sephiroth : Light];
+                [cloudViewlocal placeClouds:FewClouds :sephiroth : Light];
+                break;
+            case 501:
+                [cloudViewlocal placeClouds:ScatterClouds :sephiroth :Moderate];
+                break;
+            case 502:
+                [cloudViewlocal placeClouds:BrokeClouds :sephiroth :Heavy];
                 break;
             default:
                 NSLog(@"Non-cloudy/rainy weather ID was passed into placeClouds, weather ID: %i",weatherID);

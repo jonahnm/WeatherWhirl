@@ -1,3 +1,4 @@
+THEOS_DEVICE_IP = 10.10.10.170
 SHELL := /bin/bash
 THEOS_PACKAGE_SCHEME = rootless
 ifdef ROOTFUL
@@ -9,9 +10,10 @@ $(shell test -f controlrootless && mv control controlrootful)
 $(shell test -f controlrootless && mv controlrootless control)
 endif
 TWEAK_NAME = WeatherWhirl
-WeatherWhirl_FILES = Tweak.m WeatherHandler.m HomeScreenView.m CloudView.m RainViewController.m
-WeatherWhirl_CFLAGS = -fobjc-arc -Wno-deprecated-declarations
+WeatherWhirl_FILES = Tweak.x WeatherHandler.m HomeScreenView.m CloudView.m Preferences.m
+WeatherWhirl_CFLAGS = -fobjc-arc -Wno-deprecated-declarations -Wno-unused-but-set-variable
 WeatherWhirl_EXTRA_FRAMEWORKS = FLAnimatedImage
+WeatherWhirl_LIBRARIES = MobileGestalt
 ifdef ROOTFUL
 WeatherWhirl_LDFLAGS += -rpath /Library/Frameworks
 endif
@@ -27,3 +29,5 @@ include $(THEOS)/makefiles/common.mk
 include $(THEOS_MAKE_PATH)/tweak.mk
 SUBPROJECTS += weatherwhirlprefs
 include $(THEOS_MAKE_PATH)/aggregate.mk
+before-all:: $(eval SHELL:=/bin/bash)
+	make clean

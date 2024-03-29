@@ -1,104 +1,267 @@
 import SwiftUI
-import Combine
-import Foundation
-import WeatherWhirlPrefsC
+import PhotosUI
 import Comet
-@available(iOS 14.0, *)
-struct RootView: View {
+import libroot
+struct PreferencesView: View {
+    @State private var showDebugMenu = false
+    @State private var showWallpaperModifier = false
     @StateObject private var preferenceStorage = PreferenceStorage()
-    @State private var selectedOption: String?
-        @State private var isDebugMenuPresented = false
-        private let options = ["Tornado [Currently defunct]", "Light rain"]
-        @State private var backgroundImage: UIImage? = nil
-        
-        var body: some View {
-            NavigationView {
-                ZStack {
-                    if let backgroundImage = backgroundImage {
-                        Image(uiImage: backgroundImage)
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .edgesIgnoringSafeArea(.all)
-                    }
-                    VStack {
-                        Button("Open Debug Menu") {
-                            isDebugMenuPresented = true
-                        }
-                        .padding()
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
-                    }
-                    .sheet(isPresented: $isDebugMenuPresented) {
-                        DebugMenuView(selectedOption: $selectedOption, options: options)
-                            .environmentObject(preferenceStorage)
+    var body: some View {
+        Form {
+            Section(header: Text("General")) {
+                Button("Debug Menu") {
+                    withAnimation {
+                        self.showDebugMenu = true
                     }
                 }
-                .onAppear {
-                    loadImage()
+                Button("Wallpaper Modifier") {
+                    withAnimation {
+                        self.showWallpaperModifier = true
+                    }
                 }
             }
         }
-        
-        func loadImage() {
-            ImageLoader.loadImage(from: "https://media.springernature.com/w300/springer-static/image/art%3A10.1038%2F521135a/MediaObjects/41586_2015_Article_BF521135a_Figa_HTML.jpg?as=webp") { image in
-                self.backgroundImage = image
-            }
+        .sheet(isPresented: $showDebugMenu) {
+            DebugMenuView(showDebugMenu: $showDebugMenu)
+            .environmentObject(preferenceStorage)
         }
+        .sheet(isPresented: $showWallpaperModifier) {
+            WallpaperModifierView(showWallpaperModifier: $showWallpaperModifier)
+            .environmentObject(preferenceStorage)
+        }
+    }
 }
-@available(iOS 14, *)
+
 struct DebugMenuView: View {
-    @Binding var selectedOption: String?
-    @EnvironmentObject var preferenceStorage: PreferenceStorage
-    let options: [String]
+    @Binding var showDebugMenu: Bool
+    @State private var selectedOption = "light rain"
+    let debugOptions = ["light rain","clear sky","moderate rain","heavy intensity rain","few clouds","scattered clouds","broken clouds","overcast clouds"]
+    @State private var showPicker = false
     
     var body: some View {
         VStack {
-            Picker("Select an option", selection: $selectedOption) {
-                ForEach(options, id: \.self) { option in
-                    Text(option).tag(option as String?)
+            List {
+                Button("Open Picker") {
+                    withAnimation {
+                        self.showPicker = true
+                    }
+                }
+                
+                // Other debug menu items...
+            }
+            .sheet(isPresented: $showPicker) {
+                OptionPickerView(selectedOption: $selectedOption, debugOptions: debugOptions)
+            }
+            
+            Button("Back") {
+                withAnimation {
+                    self.showDebugMenu = false
                 }
             }
-            .pickerStyle(MenuPickerStyle())
+            .padding()
+        }
+    }
+}
+
+struct OptionPickerView: View {
+    @Binding var selectedOption: String
+    let debugOptions: [String]
+    @State private var showingAlert = false
+    @Environment(\.presentationMode) var presentationMode
+    @EnvironmentObject var preferenceStorage: PreferenceStorage
+    var body: some View {
+        VStack {
+            Picker("Select an option", selection: $selectedOption) {
+                ForEach(debugOptions, id: \.self) { option in
+                    Text(option).tag(option)
+                }
+            }
+            .pickerStyle(WheelPickerStyle())
             .padding()
             
-            Button("Trigger") {
-                if selectedOption == "Light rain" {
-                    preferenceStorage.shouldOverride = true
-                    preferenceStorage.override = selectedOption!
-                    Respring.execute()
+            Button("Done") {
+                withAnimation {
+                    showingAlert = true
                 }
+            }
+            .padding()
+            .alert(isPresented: $showingAlert) {
+                Alert(
+                    title: Text("Are you sure?"),
+                    message: Text("Are you sure you want to override the weather, THIS WILL RESPRING!"),
+                    primaryButton: .destructive(Text("Yes"),action: {
+                        preferenceStorage.shouldOverride = true
+                    preferenceStorage.override = selectedOption
+                    Respring.execute()
+                    }),
+                    secondaryButton: .default(Text("No"),action: {
+                        withAnimation {
+                        showingAlert = false
+                        presentationMode.wrappedValue.dismiss()
+                        }
+                    })
+                )
+            }
+        }
+        .background(
+            LinearGradient(gradient: Gradient(colors: [Color.blue.opacity(0.3), Color.purple.opacity(0.3)]), startPoint: .top, endPoint: .bottom)
+        )
+        .cornerRadius(10)
+        .shadow(radius: 5)
+        .overlay(
+            Button(action: {
+                withAnimation {
+                    presentationMode.wrappedValue.dismiss()
+                }
+            }) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.title)
+                    .foregroundColor(.secondary)
+            },
+            alignment: .topTrailing
+        )
+    }
+}
+
+struct WallpaperModifierView: View {
+    @Binding var showWallpaperModifier: Bool
+    @State private var selectedWallpaperOption = "All"
+    let wallpaperOptions = ["All","light rain","moderate rain","heavy intensity rain","clear sky","few clouds","scattered clouds","broken clouds","overcast clouds"];
+    @State private var showImagePicker = false
+    @State private var selectedImage: UIImage?
+    @State private var showFailAlert = false
+    @EnvironmentObject var preferenceStorage: PreferenceStorage
+    var body: some View {
+        VStack {
+            Picker("Select Wallpaper", selection: $selectedWallpaperOption) {
+                ForEach(wallpaperOptions, id: \.self) { option in
+                    Text(option).tag(option)
+                }
+            }
+            .pickerStyle(WheelPickerStyle())
+            
+            if selectedImage != nil {
+                Image(uiImage: selectedImage!)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 200)
+                    .cornerRadius(10)
+                    .shadow(radius: 5)
+            }
+            
+            Button("Select Photo") {
+                withAnimation {
+                    self.showImagePicker = true
+                }
+            }
+            
+            Button("Apply") {
+               if(selectedWallpaperOption == "All") {
+                    for weather in wallpaperOptions {
+                        if weather == "All" {
+                            continue
+                        }
+                        let pngData = selectedImage!.pngData()!
+                        let saveTo = NSString.path(withComponents: [NSString.init(cString: libroot_dyn_get_root_prefix(), encoding: UInt(4))! as String,"/Library/Application Support/WeatherWhirl","/" + weather + ".png"])
+                        NSLog(saveTo);
+                        do {
+                        try pngData.write(to: URL(fileURLWithPath: saveTo),options: [.atomic])
+                        } catch {
+                            withAnimation {
+                                showFailAlert = true
+                            }
+                            return
+                        }
+                        preferenceStorage.customBackgrounds[weather] = saveTo
+                    }
+               } else {
+                        let pngData = selectedImage!.pngData()!
+                        let saveTo = NSString.path(withComponents: [NSString.init(cString: libroot_dyn_get_root_prefix(), encoding: UInt(4))! as String,"/Library/Application Support/WeatherWhirl","/" + selectedWallpaperOption + ".png"])
+                        NSLog(saveTo)
+                        do {
+                        try pngData.write(to: NSURL.fileURL(withPath: saveTo),options: [.atomic])
+                        } catch {
+                            withAnimation {
+                                showFailAlert = true
+                            }
+                            return
+                        }
+                        preferenceStorage.customBackgrounds[selectedWallpaperOption] = saveTo
+               }
+               Respring.execute()
+            }
+            .alert(isPresented: $showFailAlert) {
+                Alert(
+                    title: Text("Error!"),
+                    message: Text("Failed to apply image!"),
+                    dismissButton: .default(Text("OK"),action: {
+                        withAnimation {
+                            showFailAlert = false
+                        }
+                    })
+                )
             }
             .padding()
             .background(Color.blue)
             .foregroundColor(.white)
-            .cornerRadius(8)
+            .cornerRadius(10)
+            
+            Button("Back") {
+                withAnimation {
+                    self.showWallpaperModifier = false
+                }
+            }
+            .padding()
         }
-        .padding()
+        .sheet(isPresented: $showImagePicker) {
+            ImagePicker(selectedImage: $selectedImage)
+        }
     }
 }
-@available(iOS 14, *)
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        RootView()
+
+struct ImagePicker: UIViewControllerRepresentable {
+    @Binding var selectedImage: UIImage?
+    @Environment(\.presentationMode) var presentationMode
+    
+    func makeUIViewController(context: Context) -> PHPickerViewController {
+        var config = PHPickerConfiguration()
+        config.selectionLimit = 1
+        config.filter = .images
+        let picker = PHPickerViewController(configuration: config)
+        picker.delegate = context.coordinator
+        return picker
     }
-}
-@available(iOS 14, *)
-struct ImageLoader {
-    static func loadImage(from urlString: String, completion: @escaping (UIImage?) -> Void) {
-        guard let url = URL(string: urlString) else {
-            completion(nil)
-            return
+    
+    func updateUIViewController(_ uiViewController: PHPickerViewController, context: Context) {}
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    class Coordinator: NSObject, PHPickerViewControllerDelegate {
+        var parent: ImagePicker
+        
+        init(_ parent: ImagePicker) {
+            self.parent = parent
         }
         
-        URLSession.shared.dataTask(with: url) { data, response, error in
-            guard let data = data, error == nil else {
-                completion(nil)
-                return
+        func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+            if let result = results.first, result.itemProvider.canLoadObject(ofClass: UIImage.self) {
+                result.itemProvider.loadObject(ofClass: UIImage.self) { image, error in
+                    if let image = image as? UIImage {
+                        DispatchQueue.main.async {
+                            self.parent.selectedImage = image
+                        }
+                    }
+                }
             }
-            DispatchQueue.main.async {
-                completion(UIImage(data: data))
-            }
-        }.resume()
+            parent.presentationMode.wrappedValue.dismiss()
+        }
+    }
+}
+
+struct PreferencesView_Previews: PreviewProvider {
+    static var previews: some View {
+        PreferencesView()
     }
 }

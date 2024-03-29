@@ -28,7 +28,7 @@ typedef enum {
     RagShower = 531,
 } RainTypes;
 @interface UIScreen (random)
--(CGPoint)randomPoint;
+-(CGPoint)randomPointWithCloudView:(id)cloudView;
 @end
 @interface HomeScreenView: UIView
 {
