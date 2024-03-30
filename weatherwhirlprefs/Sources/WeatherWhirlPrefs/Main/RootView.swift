@@ -2,6 +2,7 @@ import SwiftUI
 import PhotosUI
 import Comet
 import libroot
+import FMPhotoPicker
 struct PreferencesView: View {
     @State private var showDebugMenu = false
     @State private var showWallpaperModifier = false
@@ -222,40 +223,34 @@ struct WallpaperModifierView: View {
 struct ImagePicker: UIViewControllerRepresentable {
     @Binding var selectedImage: UIImage?
     @Environment(\.presentationMode) var presentationMode
-    
-    func makeUIViewController(context: Context) -> PHPickerViewController {
-        var config = PHPickerConfiguration()
-        config.selectionLimit = 1
-        config.filter = .images
-        let picker = PHPickerViewController(configuration: config)
+    func makeUIViewController(context: Context) -> FMPhotoPickerViewController {
+        var config = FMPhotoPickerConfig()
+        config.selectMode = .single
+        config.maxImage = 1
+        config.mediaTypes = [.image]
+        let picker = FMPhotoPickerViewController(config: config)
         picker.delegate = context.coordinator
+        context.coordinator.innerController = picker
         return picker
     }
     
-    func updateUIViewController(_ uiViewController: PHPickerViewController, context: Context) {}
+    func updateUIViewController(_ uiViewController: FMPhotoPickerViewController, context: Context) {}
     
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
     
-    class Coordinator: NSObject, PHPickerViewControllerDelegate {
+    class Coordinator: NSObject, FMPhotoPickerViewControllerDelegate {
         var parent: ImagePicker
-        
+        var innerController: FMPhotoPickerViewController?
         init(_ parent: ImagePicker) {
             self.parent = parent
         }
         
-        func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
-            if let result = results.first, result.itemProvider.canLoadObject(ofClass: UIImage.self) {
-                result.itemProvider.loadObject(ofClass: UIImage.self) { image, error in
-                    if let image = image as? UIImage {
-                        DispatchQueue.main.async {
-                            self.parent.selectedImage = image
-                        }
-                    }
-                }
-            }
-            parent.presentationMode.wrappedValue.dismiss()
+        func fmPhotoPickerController(_ picker: FMPhotoPickerViewController, didFinishPickingPhotoWith photos: [UIImage]) {
+          //  NSLog("%@",photos.first?.description)
+            self.parent.selectedImage = photos.first
+            self.innerController?.dismiss(animated: true,completion: nil)
         }
     }
 }

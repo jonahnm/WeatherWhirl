@@ -17,15 +17,15 @@
 #include <UIKit/NSLayoutConstraint.h>
 @implementation UIScreen (random)
 -(CGPoint)randomPointWithCloudView:(CloudView *)cloudview {
-    @autoreleasepool {
     CGPoint point = CGPointMake(arc4random_uniform(self.bounds.size.width), arc4random_uniform(self.bounds.size.height));
     for (UIView *view in cloudview.subviews) {
+        @autoreleasepool {
         if (CGRectContainsPoint(view.frame, point)) {
             return [self randomPointWithCloudView:cloudview];
         }
+        }
     }
     return point;
-    }
 }
 @end
 @implementation  HomeScreenView : UIView

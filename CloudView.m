@@ -76,6 +76,7 @@
         int requiredClouds = round(screenArea/imageArea * (coveragePercent/100));
         NSLog(@"Clouds needed to fill: %i",requiredClouds);
         for(int i = 0; i < requiredClouds; i++) {
+            @autoreleasepool {
             UIImageView *cloudimgView = [[UIImageView alloc] initWithImage:cloud];
             CGPoint randomPoint = [UIScreen.mainScreen randomPointWithCloudView:self];
            // NSLog(@"Before convert: %@",NSStringFromCGPoint(randomPoint));
@@ -87,7 +88,7 @@
              if(rainFramePaths != nil) {
             CGRect frame2 = [UIScreen.mainScreen.coordinateSpace convertRect:cloudimgView.frame fromCoordinateSpace:cloudimgView];
             UIImageView *animImageView = [[UIImageView alloc] initWithFrame:CGRectMake(cloudimgView.frame.origin.x, cloudimgView.frame.origin.y, cloudimgView.frame.size.width, (UIScreen.mainScreen.bounds.size.height - CGRectGetMinY(frame2)))];
-            animImageView.animationImages = [NSArray arrayWithArray:imgs];
+            animImageView.animationImages = imgs;
             animImageView.animationDuration = 0.15*4;
             if (rain == Moderate) {
                 animImageView.animationDuration /= 1.25;
@@ -100,6 +101,7 @@
             [animImageView startAnimating];
             [cloudimgView addSubview:animImageView];
             [cloudimgView sendSubviewToBack:animImageView];
+             }
         }
         }
     }

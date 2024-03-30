@@ -50,9 +50,10 @@ static struct tm *cachedTime = NULL;
 
 NSArray *fetchForecast(struct tm *gmcurtime,NSURL *path) {
     CLLocation *location = Storage.location;
+   // NSLog(@"%@",location.description);
     CFStringRef deviceid = MGGetStringAnswer(kMGUniqueDeviceID);
     NSString *deviceid_ = (__bridge NSString *)deviceid;
-    NSString *urlstr = [NSString stringWithFormat:@"http://sorasstuff.me/weather?lat=%f&lon=%f&uuid=%@",location.coordinate.latitude,location.coordinate.longitude,deviceid_];
+    NSString *urlstr = [NSString stringWithFormat:@"http://sorasstuff.me/weather?lat=%F&lon=%F&uuid=%@",location.coordinate.latitude,location.coordinate.longitude,deviceid_];
     NSURL *url = [NSURL URLWithString:urlstr];
     __block NSArray *out = nil;
     __block bool shouldret = false;

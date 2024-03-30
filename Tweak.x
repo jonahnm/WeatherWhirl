@@ -23,8 +23,9 @@
 @interface SBHomeScreenViewController : UIViewController
 @end
 %hook SBHomeScreenViewController
-- (void)viewDidLoad {
-   %orig;
+- (void)viewDidAppear:(BOOL)animated {
+   %orig(animated);
+   //dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND,0), ^{
    NSLog(@"SBHomeScreenViewController frame width: %f height: %f",self.view.frame.size.width,self.view.frame.size.height);
    HomeScreenView *weatherView = [[HomeScreenView alloc] initWithFrame:self.view.frame];
    weatherView.cloudView = [[CloudView alloc] init];
@@ -50,21 +51,21 @@
         NSLog(@"Failed to set the background for current weather!");
         return;
    }
+   //});
    //self.referenceView = weatherView;
 }
 %end
 %hook TheLocationProvider
      %property (nonatomic) CLLocation *ourlocation;
      -(instancetype)init {
-          if((self = %orig)) {
-               Storage.location = ((CLLocationManager *)[self valueForKey:@"_locationManager"]).location;
-               NSLog(@"Set location!");
-          }
-          return self;
+     self = %orig;
+     Storage.location = ((CLLocationManager *)[self valueForKey:@"_locationManager"]).location;
+     return self;
      }
 %end
 %ctor {
-    NSString *path = ROOT_PATH_NS(@"/var/mobile/Library/Preferences/com.sora.weatherwhirl.plist");
+    NSString *path = @"/var/mobile/Library/Preferences/com.sora.weatherwhirl.plist";
+    
     [WWPreferences loadPrefsWithURL:[NSURL fileURLWithPath:path]];
     if(!WWPreferences.isEnabledTweak) {
           [WWPreferences freeMe];

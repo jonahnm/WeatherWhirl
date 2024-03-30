@@ -1,0 +1,4 @@
+framework module FMPhotoPicker {
+  header "FMPhotoPicker-Swift.h"
+  requires objc
+}

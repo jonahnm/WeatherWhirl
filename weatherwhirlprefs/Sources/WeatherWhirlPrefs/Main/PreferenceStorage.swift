@@ -5,7 +5,7 @@ import libroot
 
 final class PreferenceStorage: ObservableObject {
 
-    private static let registry: String = NSString.path(withComponents: [NSString.init(cString: libroot_dyn_get_root_prefix(), encoding: UInt(4))! as String,"/var/mobile/Library/Preferences/com.sora.weatherwhirl.plist"])
+    private static let registry: String = "/var/mobile/Library/Preferences/com.sora.weatherwhirl.plist"
     /// Welcome to Comet
     /// By @ginsudev
     ///
