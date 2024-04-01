@@ -3,6 +3,11 @@
 #include <CoreGraphics/CGGeometry.h>
 #include <Foundation/Foundation.h>
 #include <Foundation/NSDictionary.h>
+#include <SceneKit/SCNGeometry.h>
+#include <SceneKit/SCNMaterial.h>
+#include <SceneKit/SCNNode.h>
+#include <SceneKit/SceneKit.h>
+#include <SceneKit/SceneKitTypes.h>
 #include <UIKit/NSLayoutConstraint.h>
 #include <UIKit/UIKit.h>
 #include <UIKit/UIScreen.h>
@@ -15,58 +20,36 @@
 #include "HomeScreenView.h"
 #include "rootless.h"
 #include <UIKit/NSLayoutConstraint.h>
+@import SceneKit;
 @implementation UIScreen (random)
--(CGPoint)randomPointWithCloudView:(CloudView *)cloudview {
+-(CGPoint)randomPointWithCloudView:(Cloud *)cloudview {
     CGPoint point = CGPointMake(arc4random_uniform(self.bounds.size.width), arc4random_uniform(self.bounds.size.height));
-    for (UIView *view in cloudview.subviews) {
-        @autoreleasepool {
-        if (CGRectContainsPoint(view.frame, point)) {
-            return [self randomPointWithCloudView:cloudview];
-        }
-        }
-    }
     return point;
 }
 @end
-@implementation  HomeScreenView : UIView
+@implementation  HomeScreen : SCNScene
     -(void) updater {
-        isUpdating = YES;
-        time_t curtime = time(NULL);
-        struct tm *curGMTime = gmtime(&curtime);
-        NSTimeInterval delay = ((60-curGMTime->tm_min)*60);
-        [self performSelector:@selector(updater) withObject:self afterDelay:delay];
-        free(curGMTime);
-    }
-    -(void)setImgView:(UIImageView *)imgView {
-        if(_imgView) {
-        [_imgView removeFromSuperview];
-        }
-        _imgView = imgView;
-        imgView.backgroundColor = UIColor.clearColor;
-        [self addSubview:imgView];
-        [self sendSubviewToBack:imgView];
+        // stub
     }
     -(void)setCloudView:(id)cloudView {
         _cloudView = cloudView;
-        CloudView *view = cloudView;
-        view.bounds = UIScreen.mainScreen.bounds;
-        view.frame = CGRectMake(0, 0, view.bounds.size.width, view.bounds.size.height);
-        [self addSubview:cloudView];
-        [self bringSubviewToFront:cloudView];
+        Clouds *cloudslocal = cloudView;
+        [self.rootNode addChildNode:cloudslocal];
     }
     -(void)setAnimatedImgView:(FLAnimatedImageView *)animatedImgView {
-        if(_animatedImgView) {
-            [_animatedImgView removeFromSuperview];
-        }
         _animatedImgView = animatedImgView;
-        [self addSubview:animatedImgView];
-        [self bringSubviewToFront:animatedImgView];
-        [animatedImgView layoutIfNeeded];
-        [self layoutIfNeeded];
+        // stub
+    }
+    +(instancetype)scene {
+    HomeScreen *inst = [super scene];
+    for(Icon *icon in Storage.queuedIcons) {
+        [inst.rootNode addChildNode:icon];
+    }
+    return inst;
     }
     -(void)placeClouds:(int)weatherID {
-        CloudView *cloudViewlocal = self.cloudView;
-        UIImage *cloud = [UIImage imageWithContentsOfFile:ROOT_PATH_NS(@"/Library/Application Support/WeatherWhirl/cloud.png")];
+        Clouds *cloudViewlocal = self.cloudView;
+        UIImage *cloud = [UIImage imageWithContentsOfFile:ROOT_PATH_NS(@"/Library/Application Support/WeatherWhirl/cloudtex.jpg")];
         UIImage *sephiroth = [UIImage imageWithContentsOfFile:ROOT_PATH_NS(@"/Library/Application Support/WeatherWhirl/sephiroth.png")];
         switch(weatherID) {
             case 801:
@@ -96,40 +79,25 @@
         }
     }
     -(void)setAnimationWithGif:(FLAnimatedImage *)animImg :(AnimPlace)whereto {
-        FLAnimatedImageView *imageView = [[FLAnimatedImageView alloc] init];
-        imageView.animatedImage = animImg;
-        imageView.translatesAutoresizingMaskIntoConstraints = NO;
-        self.animatedImgView = imageView;
-        switch(whereto) {
-            case TopLeftCorner:
-            ;
-                NSArray *vertConstraints = [NSLayoutConstraint constraintsWithVisualFormat:@"V:|[imgView]" options:NSLayoutFormatDirectionLeadingToTrailing metrics:nil views:@{
-                    @"imgView": imageView
-            }];
-            NSArray *horizConstraints = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|[imgView]" options:NSLayoutFormatDirectionLeadingToTrailing metrics:nil views:@{
-                    @"imgView": imageView
-            }];
-            [self addConstraints:vertConstraints];
-            [self addConstraints:horizConstraints];
-            break;
+        // stub
         }
-    }
     -(BOOL) setBackgroundWithImage:(id)img {
         if([img isKindOfClass:[UIImage class]]) {
-        UIImage *scaledImage = [img resizedImageWithBounds:UIScreen.mainScreen.bounds.size];
-        self.imgView = [[UIImageView alloc] initWithImage:scaledImage];
-        }else if([img isKindOfClass:[FLAnimatedImage class]]) {
-            self.imgView = [[FLAnimatedImageView alloc] init];
-            CGSize mainScreenSize = UIScreen.mainScreen.bounds.size;
-            CGFloat mainScreenScale = UIScreen.mainScreen.scale;
-            CGRect boundsnframe = CGRectMake(0,0,mainScreenSize.width * mainScreenScale,mainScreenSize.height * mainScreenScale);
-            ((FLAnimatedImageView *)self.imgView).bounds = boundsnframe;
-            ((FLAnimatedImageView *)self.imgView).frame = boundsnframe;
-            ((FLAnimatedImageView *)self.imgView).animatedImage = (FLAnimatedImage *)img;
-        }
-        if(!isUpdating) {
-            [self updater];
-        }
+        self.background.contents = img;
         return YES;
     }
+    return NO;
+    }
+@end
+@implementation HomeScreenView: SCNView
+@end
+@implementation Icon: SCNNode
+-(instancetype)initWithIconView:(UIImageView *)icon {
+    self = [super init];
+    SCNGeometry *geo = [SCNPlane planeWithWidth:icon.frame.size.width height:icon.frame.size.height];
+    self.position = SCNVector3Make(icon.frame.origin.x, icon.frame.origin.y, 0);
+    self.geometry = geo;
+    self.opacity = 0;
+    return self;
+}
 @end

@@ -1,3 +1,4 @@
+@import SceneKit;
 #ifndef CLOUDVIEW_H
 #define CLOUDVIEW_H
 #define UIViewParentController(__view) ({ \
@@ -8,7 +9,11 @@
 })
     #include <UIKit/UIKit.h>
     #include "HomeScreenView.h"
-    @interface CloudView: UIView
+    @interface Cloud: SCNNode
+        +(instancetype)nodeWithCloudImg:(UIImage *)img;
+        -(void)startRain:(RainTypes)type;
+    @end
+    @interface Clouds: SCNNode
         @property (nonatomic) NSArray *clouds;
         -(void)placeClouds:(CloudyTypes)cloudType : (UIImage *)cloud : (RainTypes)rain;
         -(void)debugClouds;

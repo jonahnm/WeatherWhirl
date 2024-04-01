@@ -1,5 +1,5 @@
 ARCHS = arm64 arm64e
-TARGET := iphone:clang:16.5:14.0
+TARGET := iphone:clang:latest:15.0
 
 include $(THEOS)/makefiles/common.mk
 BUNDLE_NAME = WeatherWhirlPrefs

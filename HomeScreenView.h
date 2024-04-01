@@ -2,6 +2,7 @@
 #define HOMESCREENVIEW_H
 #include <UIKit/UIView.h>
 @import FLAnimatedImage;
+@import SceneKit;
 #include "WeatherHandler.h"
 #include <UIKit/UIImageView.h>
 #include <UIKit/UIImage.h>
@@ -30,7 +31,7 @@ typedef enum {
 @interface UIScreen (random)
 -(CGPoint)randomPointWithCloudView:(id)cloudView;
 @end
-@interface HomeScreenView: UIView
+@interface HomeScreen: SCNScene
 {
     BOOL isUpdating;
 }
@@ -42,5 +43,10 @@ typedef enum {
     -(BOOL) setBackgroundWithImage:(id)img;
     -(void)setAnimationWithGif:(FLAnimatedImage *)animImg : (AnimPlace)whereto;
     -(void)placeClouds:(int)weatherID;
+@end
+@interface HomeScreenView: SCNView
+@end
+@interface Icon: SCNNode
+-(instancetype)initWithIconView:(UIImageView *)icon;
 @end
 #endif

@@ -1,0 +1,188 @@
+// swift-interface-format-version: 1.0
+// swift-compiler-version: Apple Swift version 5.10 (swiftlang-5.10.0.13 clang-1500.3.9.4)
+// swift-module-flags: -target arm64e-apple-ios15.0 -enable-objc-interop -enable-library-evolution -swift-version 5 -enforce-exclusivity=checked -O -enable-bare-slash-regex -module-name Vortex
+import Foundation
+import Swift
+import SwiftUI
+import _Concurrency
+import _StringProcessing
+import _SwiftConcurrencyShims
+extension Vortex.VortexSystem {
+  public static let confetti: Vortex.VortexSystem
+}
+extension Vortex.VortexSystem {
+  public static let fire: Vortex.VortexSystem
+}
+extension Vortex.VortexSystem {
+  public static let fireflies: Vortex.VortexSystem
+}
+extension Vortex.VortexSystem {
+  public static let fireworks: Vortex.VortexSystem
+}
+extension Vortex.VortexSystem {
+  public static let magic: Vortex.VortexSystem
+}
+extension Vortex.VortexSystem {
+  public static let rain: Vortex.VortexSystem
+}
+extension Vortex.VortexSystem {
+  public static let smoke: Vortex.VortexSystem
+}
+extension Vortex.VortexSystem {
+  public static let snow: Vortex.VortexSystem
+}
+extension Vortex.VortexSystem {
+  public static let spark: Vortex.VortexSystem
+}
+extension Vortex.VortexSystem {
+  public static let splash: Vortex.VortexSystem
+}
+extension Vortex.VortexSystem {
+  public struct Color : Swift.Codable, Swift.ExpressibleByArrayLiteral, Swift.Hashable {
+    public var red: Swift.Double
+    public var green: Swift.Double
+    public var blue: Swift.Double
+    public var opacity: Swift.Double
+    public init(red: Swift.Double, green: Swift.Double, blue: Swift.Double, opacity: Swift.Double = 1)
+    public init(white: Swift.Double, opacity: Swift.Double = 1)
+    public init(arrayLiteral elements: Swift.Double...)
+    public static let black: Vortex.VortexSystem.Color
+    public static let blue: Vortex.VortexSystem.Color
+    public static let brown: Vortex.VortexSystem.Color
+    public static let clear: Vortex.VortexSystem.Color
+    public static let cyan: Vortex.VortexSystem.Color
+    public static let darkGray: Vortex.VortexSystem.Color
+    public static let gray: Vortex.VortexSystem.Color
+    public static let green: Vortex.VortexSystem.Color
+    public static let lightGray: Vortex.VortexSystem.Color
+    public static let orange: Vortex.VortexSystem.Color
+    public static let pink: Vortex.VortexSystem.Color
+    public static let purple: Vortex.VortexSystem.Color
+    public static let red: Vortex.VortexSystem.Color
+    public static let teal: Vortex.VortexSystem.Color
+    public static let white: Vortex.VortexSystem.Color
+    public static let yellow: Vortex.VortexSystem.Color
+    public func opacity(_ opacity: Swift.Double) -> Vortex.VortexSystem.Color
+    public func hash(into hasher: inout Swift.Hasher)
+    public static func == (a: Vortex.VortexSystem.Color, b: Vortex.VortexSystem.Color) -> Swift.Bool
+    public typealias ArrayLiteralElement = Swift.Double
+    public func encode(to encoder: any Swift.Encoder) throws
+    public var hashValue: Swift.Int {
+      get
+    }
+    public init(from decoder: any Swift.Decoder) throws
+  }
+}
+extension Vortex.VortexSystem {
+  public enum ColorMode : Swift.Codable {
+    case single(_: Vortex.VortexSystem.Color)
+    case random(_: [Vortex.VortexSystem.Color])
+    case ramp(_: [Vortex.VortexSystem.Color])
+    case randomRamp(_: [[Vortex.VortexSystem.Color]])
+    public static func random(_ colors: Vortex.VortexSystem.Color...) -> Vortex.VortexSystem.ColorMode
+    public static func ramp(_ colors: Vortex.VortexSystem.Color...) -> Vortex.VortexSystem.ColorMode
+    public static func randomRamp(_ colors: [Vortex.VortexSystem.Color]...) -> Vortex.VortexSystem.ColorMode
+    public func encode(to encoder: any Swift.Encoder) throws
+    public init(from decoder: any Swift.Decoder) throws
+  }
+}
+extension Vortex.VortexSystem {
+  public struct Particle : Swift.Hashable {
+    public func hash(into hasher: inout Swift.Hasher)
+    public static func == (a: Vortex.VortexSystem.Particle, b: Vortex.VortexSystem.Particle) -> Swift.Bool
+    public var hashValue: Swift.Int {
+      get
+    }
+  }
+}
+extension Vortex.VortexSystem {
+  public enum Shape : Swift.Codable {
+    case point
+    case box(width: Swift.Double, height: Swift.Double)
+    case ellipse(radius: Swift.Double)
+    case ring(radius: Swift.Double)
+    public func encode(to encoder: any Swift.Encoder) throws
+    public init(from decoder: any Swift.Decoder) throws
+  }
+}
+extension Vortex.VortexSystem {
+  public enum SpawnOccasion : Swift.Codable {
+    case onBirth
+    case onDeath
+    case onUpdate
+    public static func == (a: Vortex.VortexSystem.SpawnOccasion, b: Vortex.VortexSystem.SpawnOccasion) -> Swift.Bool
+    public func hash(into hasher: inout Swift.Hasher)
+    public func encode(to encoder: any Swift.Encoder) throws
+    public var hashValue: Swift.Int {
+      get
+    }
+    public init(from decoder: any Swift.Decoder) throws
+  }
+}
+public class VortexSystem : Swift.Codable, Swift.Equatable, Swift.Hashable {
+  public var position: Swift.SIMD2<Swift.Double>
+  public var tags: [Swift.String]
+  public var isEmitting: Swift.Bool
+  public var secondarySystems: [Vortex.VortexSystem]
+  public var spawnOccasion: Vortex.VortexSystem.SpawnOccasion
+  public var shape: Vortex.VortexSystem.Shape
+  public var birthRate: Swift.Double
+  public var emissionLimit: Swift.Int?
+  public var emissionDuration: Foundation.TimeInterval
+  public var idleDuration: Foundation.TimeInterval
+  public var burstCount: Swift.Int
+  public var burstCountVariation: Swift.Int
+  public var lifespan: Foundation.TimeInterval
+  public var lifespanVariation: Foundation.TimeInterval
+  public var speed: Swift.Double
+  public var speedVariation: Swift.Double
+  public var angle: SwiftUI.Angle
+  public var angleRange: SwiftUI.Angle
+  public var acceleration: Swift.SIMD2<Swift.Double>
+  public var attractionCenter: Swift.SIMD2<Swift.Double>?
+  public var attractionStrength: Swift.Double
+  public var dampingFactor: Swift.Double
+  public var angularSpeed: Swift.SIMD3<Swift.Double>
+  public var angularSpeedVariation: Swift.SIMD3<Swift.Double>
+  public var colors: Vortex.VortexSystem.ColorMode {
+    get
+    set
+  }
+  public var size: Swift.Double
+  public var sizeVariation: Swift.Double
+  public var sizeMultiplierAtDeath: Swift.Double
+  public var stretchFactor: Swift.Double
+  public init(tags: [Swift.String], secondarySystems: [Vortex.VortexSystem] = [], spawnOccasion: Vortex.VortexSystem.SpawnOccasion = .onBirth, position: Swift.SIMD2<Swift.Double> = [0.5, 0.5], shape: Vortex.VortexSystem.Shape = .point, birthRate: Swift.Double = 100, emissionLimit: Swift.Int? = nil, emissionDuration: Swift.Double = 1, idleDuration: Swift.Double = 0, burstCount: Swift.Int = 100, burstCountVariation: Swift.Int = 0, lifespan: Foundation.TimeInterval = 1, lifespanVariation: Foundation.TimeInterval = 0, speed: Swift.Double = 1, speedVariation: Swift.Double = 0, angle: SwiftUI.Angle = .zero, angleRange: SwiftUI.Angle = .zero, acceleration: Swift.SIMD2<Swift.Double> = [0, 0], attractionCenter: Swift.SIMD2<Swift.Double>? = nil, attractionStrength: Swift.Double = 0, dampingFactor: Swift.Double = 0, angularSpeed: Swift.SIMD3<Swift.Double> = [0, 0, 0], angularSpeedVariation: Swift.SIMD3<Swift.Double> = [0, 0, 0], colors: Vortex.VortexSystem.ColorMode = .single(.white), size: Swift.Double = 1, sizeVariation: Swift.Double = 0, sizeMultiplierAtDeath: Swift.Double = 1, stretchFactor: Swift.Double = 1)
+  required public init(from decoder: any Swift.Decoder) throws
+  public func encode(to encoder: any Swift.Encoder) throws
+  public static func == (lhs: Vortex.VortexSystem, rhs: Vortex.VortexSystem) -> Swift.Bool
+  public func hash(into hasher: inout Swift.Hasher)
+  public func makeUniqueCopy() -> Vortex.VortexSystem
+  @objc deinit
+  public var hashValue: Swift.Int {
+    get
+  }
+}
+public struct VortexProxy {
+  public let particleSystem: Vortex.VortexSystem?
+  public let burst: () -> Swift.Void
+  public let attractTo: (CoreFoundation.CGPoint?) -> Swift.Void
+  public func move(to newPosition: CoreFoundation.CGPoint)
+}
+public struct VortexView<Symbols> : SwiftUI.View where Symbols : SwiftUI.View {
+  public var targetFrameRate: Swift.Int
+  @_Concurrency.MainActor(unsafe) public var body: some SwiftUI.View {
+    get
+  }
+  public init(_ system: Vortex.VortexSystem, targetFrameRate: Swift.Int = 60, @SwiftUI.ViewBuilder symbols: () -> Symbols)
+  public typealias Body = @_opaqueReturnTypeOf("$s6Vortex0A4ViewV4bodyQrvp", 0) __<Symbols>
+}
+public struct VortexViewReader<Content> : SwiftUI.View where Content : SwiftUI.View {
+  public init(@SwiftUI.ViewBuilder content: @escaping (Vortex.VortexProxy) -> Content)
+  @_Concurrency.MainActor(unsafe) public var body: some SwiftUI.View {
+    get
+  }
+  public typealias Body = @_opaqueReturnTypeOf("$s6Vortex0A10ViewReaderV4bodyQrvp", 0) __<Content>
+}
+extension Vortex.VortexSystem.SpawnOccasion : Swift.Equatable {}
+extension Vortex.VortexSystem.SpawnOccasion : Swift.Hashable {}

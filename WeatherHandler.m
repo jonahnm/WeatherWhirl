@@ -5,6 +5,9 @@
 #include "libroot/libroot.h"
 #include <CoreFoundation/CFCGTypes.h>
 #import <CoreFoundation/CoreFoundation.h>
+#include <SceneKit/SCNView.h>
+#include <SceneKit/SceneKit.h>
+#include <SceneKit/SCNGeometry.h>
 #include <UIKit/NSStringDrawing.h>
 #include <objc/objc.h>
 #include <Foundation/NSData.h>
@@ -38,11 +41,35 @@ return self;
 @end
 @implementation Storage
     static CLLocation *_location;
+    static SCNNode *_cloud;
+    static SCNView *_sceneView;
+    static NSMutableArray *_queuedIcons;
     +(CLLocation *)location {
     return _location;
     }
     +(void)setLocation:(CLLocation *)location {
     _location = location;
+    }
+    +(SCNNode *)cloud {
+    return _cloud;
+    }
+    +(void)setCloud:(SCNNode *)cloud {
+        _cloud = cloud;
+    }
+    +(SCNView *)sceneView {
+    return _sceneView;
+    }
+    +(void)setSceneView:(SCNView *)sceneView {
+        _sceneView = sceneView;
+    }
+    +(NSMutableArray *)queuedIcons {
+    if(_queuedIcons == nil) {
+        _queuedIcons = [[NSMutableArray alloc] init];
+    }
+    return _queuedIcons;
+    }
+    +(void)setQueuedIcons:(NSMutableArray *)queuedIcons {
+    _queuedIcons = queuedIcons;
     }
 @end
 static UIImage *cachedImage = nil;
